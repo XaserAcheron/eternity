@@ -328,6 +328,9 @@ ENDIF (WIN32)
 ######################### Set Build Targets   ##################################
 
 INCLUDE_DIRECTORIES(acsvm)
+INCLUDE_DIRECTORIES(angelscript/add_on/autowrapper)
+INCLUDE_DIRECTORIES(angelscript/add_on/scriptarray)
+INCLUDE_DIRECTORIES(angelscript/angelscript/include)
 INCLUDE_DIRECTORIES(libpng)
 INCLUDE_DIRECTORIES(zlib)
 INCLUDE_DIRECTORIES(adlmidi/include)
@@ -339,6 +342,7 @@ ADD_SUBDIRECTORY(acsvm)
 SET(WITH_CPP_EXTRAS ON)
 ADD_SUBDIRECTORY(adlmidi)
 
+ADD_SUBDIRECTORY(angelscript/angelscript/projects/cmake)
 ADD_SUBDIRECTORY(zlib)
 ADD_SUBDIRECTORY(libpng)
 ADD_SUBDIRECTORY(snes_spc)

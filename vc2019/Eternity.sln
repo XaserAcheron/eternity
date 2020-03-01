@@ -6,6 +6,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Eternity", "Eternity.vcxpro
 	ProjectSection(ProjectDependencies) = postProject
 		{06F7C536-AB34-4054-ACE1-EF74F07A533C} = {06F7C536-AB34-4054-ACE1-EF74F07A533C}
 		{A3D79066-950D-42E4-8555-D7663BA5E0C7} = {A3D79066-950D-42E4-8555-D7663BA5E0C7}
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD} = {39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snes_spc", "snes_spc.vcxproj", "{8B8CBCA2-21D3-4C23-A397-A4D084F649D3}"
@@ -22,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "adlmidi", "adlmidi.vcxproj", "{06F7C536-AB34-4054-ACE1-EF74F07A533C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "angelscript", "..\angelscript\angelscript\projects\msvc2019\angelscript.vcxproj", "{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,6 +108,18 @@ Global
 		{06F7C536-AB34-4054-ACE1-EF74F07A533C}.Shipping|Win32.Build.0 = Shipping|Win32
 		{06F7C536-AB34-4054-ACE1-EF74F07A533C}.Shipping|x64.ActiveCfg = Shipping|x64
 		{06F7C536-AB34-4054-ACE1-EF74F07A533C}.Shipping|x64.Build.0 = Shipping|x64
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Debug|Win32.Build.0 = Debug|Win32
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Debug|x64.ActiveCfg = Debug|x64
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Debug|x64.Build.0 = Debug|x64
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Release|Win32.ActiveCfg = Release|Win32
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Release|Win32.Build.0 = Release|Win32
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Release|x64.ActiveCfg = Release|x64
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Release|x64.Build.0 = Release|x64
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Shipping|Win32.ActiveCfg = Shipping|Win32
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Shipping|Win32.Build.0 = Shipping|Win32
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Shipping|x64.ActiveCfg = Release|x64
+		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Shipping|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

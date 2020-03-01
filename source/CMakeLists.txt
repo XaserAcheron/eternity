@@ -111,7 +111,7 @@ set_target_properties(eternity
    CXX_STANDARD_REQUIRED ON
 )
 
-target_link_libraries(eternity ${SDL2_LIBRARY} ${SDL2_MIXER_LIBRARY} ${SDL2_NET_LIBRARY} acsvm png_static snes_spc ADLMIDI_static)
+target_link_libraries(eternity ${SDL2_LIBRARY} ${SDL2_MIXER_LIBRARY} ${SDL2_NET_LIBRARY} ${ANGELSCRIPT_LIBRARY_NAME} acsvm png_static snes_spc ADLMIDI_static)
 
 if(OPENGL_LIBRARY)
    target_link_libraries(eternity ${OPENGL_LIBRARY})

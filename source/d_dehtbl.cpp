@@ -1239,6 +1239,9 @@ const char *mapnamesh[] = // haleyjd: heretic map names
 
 // External references to action functions scattered about the code
 
+// This cheese stands alone!
+void A_Aeon(actionargs_t *);
+
 void A_Light0(actionargs_t *);
 void A_WeaponReady(actionargs_t *);
 void A_Lower(actionargs_t *);

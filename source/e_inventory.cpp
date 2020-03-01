@@ -44,6 +44,7 @@
 #include "d_dehtbl.h"
 #include "d_gi.h"
 #include "doomstat.h"
+#include "e_actions.h"
 #include "e_args.h"
 #include "e_weapons.h"
 #include "g_game.h"
@@ -1719,21 +1720,22 @@ static useaction_t *E_useActionForArtifactName(const char *name)
 //
 // Create and add a new useaction_t, then return a pointer it
 //
-static useaction_t *E_addUseAction(itemeffect_t *artifact)
+static useaction_t *E_addUseAction(const itemeffect_t *artifact, const action_t *action)
 {
    useaction_t *toadd = estructalloc(useaction_t, 1);
-   arglist_t *args = estructalloc(arglist_t, 1);
+   arglist_t   *args  = estructalloc(arglist_t,   1);
+   MetaString  *ms    = nullptr;
 
-   MetaString *ms = nullptr;
    while((ms = artifact->getNextKeyAndTypeEx(ms, keyArgs)))
    {
       if(!E_AddArgToList(args, ms->getValue()))
          return nullptr;
    }
 
-   toadd->artifactname = artifact->getKey(); // FIXME: This is safe, right?
-   toadd->actiontype = actionargs_t::ARTIFACT;
-   toadd->args = args;
+   toadd->artifactname = artifact->getKey();
+   toadd->actiontype   = actionargs_t::ARTIFACT;
+   toadd->args         = args;
+   toadd->aeonaction   = action->aeonaction;
    e_UseActionHash.addObject(toadd);
    return toadd;
 }
@@ -1746,7 +1748,7 @@ static useaction_t *E_addUseAction(itemeffect_t *artifact)
 void E_TryUseItem(player_t *player, inventoryitemid_t ID)
 {
    invbarstate_t &invbarstate = player->invbarstate;
-   itemeffect_t *artifact = E_EffectForInventoryItemID(ID);
+   itemeffect_t  *artifact    = E_EffectForInventoryItemID(ID);
    if(!artifact)
       return;
    if(E_getItemEffectType(artifact) == ITEMFX_ARTIFACT)
@@ -1755,8 +1757,8 @@ void E_TryUseItem(player_t *player, inventoryitemid_t ID)
       {
          bool success = false;
 
-         const char *useeffectstr = artifact->getString(keyUseEffect, "");
-         itemeffect_t *effect = E_ItemEffectForName(useeffectstr);
+         const char   *useeffectstr = artifact->getString(keyUseEffect, nullptr);
+         itemeffect_t *effect       = E_ItemEffectForName(useeffectstr);
          if(effect)
          {
             switch(E_getItemEffectType(effect))
@@ -1778,15 +1780,15 @@ void E_TryUseItem(player_t *player, inventoryitemid_t ID)
             }
          }
 
-         const char *useactionstr = artifact->getString(keyUseAction, "");
-         deh_bexptr *ptr = D_GetBexPtr(useactionstr);
-         if(ptr)
+         const char *useactionstr = artifact->getString(keyUseAction, nullptr);
+         action_t   *action       = E_GetAction(useactionstr);
+         if(action)
          {
             // Try and get the cached useaction, and if we fail, make one
             useaction_t *useaction = E_useActionForArtifactName(artifact->getKey());
             if(useaction == nullptr)
             {
-               if((useaction = E_addUseAction(artifact)) == nullptr)
+               if((useaction = E_addUseAction(artifact, action)) == nullptr)
                {
                   doom_printf("Too many args specified in useaction for artifact '%s'\a\n",
                               artifact->getKey());
@@ -1794,22 +1796,22 @@ void E_TryUseItem(player_t *player, inventoryitemid_t ID)
             }
             if(useaction != nullptr)
             {
-               actionargs_t action = *useaction;
+               actionargs_t args = *useaction;
 
                // Temporarily note down that the called codepointer shouldn't subtract ammo
                player->attackdown = static_cast<attacktype_e>(player->attackdown | AT_ITEM);
                // We ALWAYS update the actor and psprite
-               action.actor = player->mo;
-               action.pspr  = player->psprites;
-               ptr->cptr(&action);
+               args.actor = player->mo;
+               args.pspr  = player->psprites;
+               action->codeptr(&args);
                success = true;
                player->attackdown = static_cast<attacktype_e>(player->attackdown & ~AT_ITEM);
             }
          }
          else if(estrnonempty(useactionstr))
          {
-            doom_printf("Codepointer '%s' not found in useaction for artifact '%s'\a\n",
-                        useactionstr, artifact->getKey());
+            doom_printf("Codepointer/action '%s' not found in useaction for "
+                        "artifact '%s'\a\n", useactionstr, artifact->getKey());
          }
 
 
@@ -1818,10 +1820,11 @@ void E_TryUseItem(player_t *player, inventoryitemid_t ID)
             const char *sound;
             E_RemoveInventoryItem(player, artifact, 1);
 
-            sound = artifact->getString(keyUseSound, "");
+            sound = artifact->getString(keyUseSound, nullptr);
             if(estrnonempty(sound))
                S_StartSoundName(player->mo, sound);
 
+            // TODO: Make this not hard-coded
             invbarstate.ArtifactFlash = 5;
          }
          else

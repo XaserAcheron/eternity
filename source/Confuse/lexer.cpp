@@ -216,7 +216,8 @@ enum
    STATE_LINECONTINUANCE,
    STATE_STRINGCOALESCE,
    STATE_UNQUOTEDSTRING,
-   STATE_HEREDOC
+   STATE_HEREDOC,
+   STATE_RAWSTRING,
 };
 
 //
@@ -510,6 +511,31 @@ static int lexer_state_heredoc(lexerstate_t *ls)
 }
 
 //
+// lexer_state_rawstring
+//
+static int lexer_state_rawstring(lexerstate_t *ls)
+{
+   // check for end of raw string
+   if(ls->c == ')' && *bufferpos == '"')
+   {
+      ++bufferpos; // move forward past @
+      mytext = qstr.constPtr();
+
+      return CFGT_STR; // return a string token
+   }
+   else // normal characters -- everything is literal
+   {
+      if(ls->c == '\n')
+         ls->cfg->line++; // still need to track line numbers
+
+      qstr += ls->c;
+
+      return -1; // continue parsing
+   }
+}
+
+
+//
 // lexer_state_none
 //
 static int lexer_state_none(lexerstate_t *ls)
@@ -611,12 +637,24 @@ static int lexer_state_none(lexerstate_t *ls)
          ls->state = STATE_HEREDOC;
          break;
       }
-      // fall through, @ is not special unless followed by " or '
+      goto unquoted_string;
+      break;
+   case 'R':
+      if(*bufferpos == '"' && *(bufferpos + 1) == '(') // look ahead to next two character s
+      {
+         bufferpos += 2; // move past secondary delimiter characters
+         qstr.clear();
+         ls->state = STATE_RAWSTRING;
+         break;
+      }
+      goto unquoted_string;
+      break;
    default:  // anything else is part of an unquoted string
+unquoted_string:
       if(ls->c == ':' && currentDialect >= CFG_DIALECT_ALFHEIM)
       {
          mytext = ":";
-         ret    = ':'; 
+         ret    = ':';
       }
       else
       {
@@ -643,6 +681,7 @@ static lexfunc_t lexerfuncs[] =
    lexer_state_stringcoalesce,
    lexer_state_unquotedstring,
    lexer_state_heredoc,
+   lexer_state_rawstring,
 };
 
 //

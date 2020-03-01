@@ -35,6 +35,7 @@
 #include "z_zone.h"
 
 #include "acs_intr.h"
+#include "aeon_system.h"
 #include "am_map.h"
 #include "c_io.h"
 #include "c_net.h"
@@ -1594,6 +1595,9 @@ static void D_DoomInit()
 
    // Init bex hash chaining before EDF
    D_BuildBEXHashChains();
+
+   // Init Aeon before EDF
+   Aeon::ScriptManager::Init();
 
    // Identify root EDF file and process EDF
    D_LoadEDF(gfs);
