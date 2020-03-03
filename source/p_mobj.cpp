@@ -2669,8 +2669,8 @@ spawnit:
 // P_SpawnPuff
 //
 Mobj *P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z, angle_t dir,
-                  int updown, bool ptcl, const MetaTable *pufftype,
-                  const Mobj *hitmobj)
+                  int updown, bool ptcl, Mobj *shooter,
+                  const MetaTable *pufftype, const Mobj *hitmobj)
 {
    if(!pufftype)
    {
@@ -2741,6 +2741,16 @@ Mobj *P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z, angle_t dir,
             P_SetMobjState(th, snum);
             punchhack = true;
          }
+      }
+
+      // [XA] 03/02/20: new flag that sets target to the shooter.
+      // This is useful for doing things like setting A_DetonateEx's
+      // hurt_self field on a puff, and other projectile-esque
+      // behaviors that rely on a valid 'target' field. Basically
+      // GZD's "PUFFGETSOWNER" flag but with a less crappy name. :P
+      if(pufftype->getInt(keyPuffTargetShooter, 0))
+      {
+         th->target = shooter;
       }
    }
 
@@ -3178,7 +3188,7 @@ fixed_t P_PlayerPitchSlope(player_t *player)
 //
 // Tries to aim at a nearby monster
 //
-Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
+Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type, playermissilemode_e mode)
 {
    Mobj *th;
    fixed_t x, y, z, slope = 0;
@@ -3189,6 +3199,7 @@ Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
 
    // killough 7/19/98: autoaiming was not in original beta
    // sf: made a multiplayer option
+   fixed_t playersightslope = P_PlayerPitchSlope(source->player);
    if(autoaim)
    {
       // killough 8/2/98: prefer autoaiming at enemies
@@ -3204,7 +3215,7 @@ Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
          {
             an = source->angle;
             // haleyjd: use true slope angle
-            slope = P_PlayerPitchSlope(source->player);
+            slope = playersightslope;
          }
       }
       while(mask && (mask=false, !clip.linetarget));  // killough 8/2/98
@@ -3212,12 +3223,13 @@ Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
    else
    {
       // haleyjd: use true slope angle
-      slope = P_PlayerPitchSlope(source->player);
+      slope = playersightslope;
    }
 
    x = source->x;
    y = source->y;
-   z = source->z + 4*8*FRACUNIT - source->floorclip;
+   z = source->z + 4*8*FRACUNIT - source->floorclip +
+         (mode == playermissilemode_e::heretic ? playersightslope : 0);
 
    th = P_SpawnMobj(x, y, z, type);
 
