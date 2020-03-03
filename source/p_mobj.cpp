@@ -3177,7 +3177,7 @@ fixed_t P_PlayerPitchSlope(player_t *player)
 //
 // Tries to aim at a nearby monster
 //
-Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
+Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type, playermissilemode_e mode)
 {
    Mobj *th;
    fixed_t x, y, z, slope = 0;
@@ -3188,6 +3188,7 @@ Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
 
    // killough 7/19/98: autoaiming was not in original beta
    // sf: made a multiplayer option
+   fixed_t playersightslope = P_PlayerPitchSlope(source->player);
    if(autoaim)
    {
       // killough 8/2/98: prefer autoaiming at enemies
@@ -3203,7 +3204,7 @@ Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
          {
             an = source->angle;
             // haleyjd: use true slope angle
-            slope = P_PlayerPitchSlope(source->player);
+            slope = playersightslope;
          }
       }
       while(mask && (mask=false, !clip.linetarget));  // killough 8/2/98
@@ -3211,12 +3212,13 @@ Mobj *P_SpawnPlayerMissile(Mobj* source, mobjtype_t type)
    else
    {
       // haleyjd: use true slope angle
-      slope = P_PlayerPitchSlope(source->player);
+      slope = playersightslope;
    }
 
    x = source->x;
    y = source->y;
-   z = source->z + 4*8*FRACUNIT - source->floorclip;
+   z = source->z + 4*8*FRACUNIT - source->floorclip +
+         (mode == playermissilemode_e::heretic ? playersightslope : 0);
 
    th = P_SpawnMobj(x, y, z, type);
 

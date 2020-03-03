@@ -142,11 +142,11 @@ void A_FireMacePL1B(actionargs_t *actionargs)
 
    const int   tnum = E_SafeThingType(MT_MACEFX2);
 
-   ball = P_SpawnMobj(pmo->x, pmo->y, pmo->z + (28 * FRACUNIT) - pmo->floorclip, tnum);
+   ball = P_SpawnMobj(pmo->x, pmo->y, pmo->z + (28 * FRACUNIT), tnum);
 
    const fixed_t slope = P_PlayerPitchSlope(player);
-   // Use Heretic's weird formula.
-   ball->momz = 2 * FRACUNIT + slope * 173 / 32;
+   // NOTE: the 'magic' number came from computing Heretic's formula.
+   ball->momz = 2 * FRACUNIT + FixedMul(ball->info->speed, FixedMul(slope, 35430));
 
    angle = pmo->angle;
    P_SetTarget(&ball->target, pmo);
@@ -290,7 +290,7 @@ void A_FireMacePL2(actionargs_t *actionargs)
    // FIXME: This needs to do the above behaviour:
    // to wit, fire the wimpy version's amount of ammo if in deathmatch
    P_SubtractAmmo(player, -1);
-   mo = P_SpawnPlayerMissile(player->mo, tnum);
+   mo = P_SpawnPlayerMissile(player->mo, tnum, playermissilemode_e::heretic);
    if(mo)
    {
       mobjinfo_t *fx = mobjinfo[tnum];
@@ -298,7 +298,9 @@ void A_FireMacePL2(actionargs_t *actionargs)
 
       mo->momx += player->mo->momx;
       mo->momy += player->mo->momy;
-      mo->momz = FixedMul(fx->speed, slope) + (2 * FRACUNIT);
+      // NOTE: the 'magic' number came from computing how Heretic's constant slope calculation fits
+      // with a super mace projectile's forward speed.
+      mo->momz = FixedMul(fx->speed, FixedMul(slope, 50615)) + (2 * FRACUNIT);
       if(clip.linetarget)
          P_SetTarget(&mo->tracer, clip.linetarget);
    }
@@ -384,7 +386,7 @@ void A_FireCrossbowPL1(actionargs_t *actionargs)
       return;
 
    P_SubtractAmmo(player, -1);
-   P_SpawnPlayerMissile(pmo, E_SafeThingType(MT_CRBOWFX1));
+   P_SpawnPlayerMissile(pmo, E_SafeThingType(MT_CRBOWFX1), playermissilemode_e::heretic);
    P_SpawnPlayerMissileAngleHeretic(pmo, tnum, pmo->angle - (ANG45 / 10));
    P_SpawnPlayerMissileAngleHeretic(pmo, tnum, pmo->angle + (ANG45 / 10));
 }
@@ -400,7 +402,7 @@ void A_FireCrossbowPL2(actionargs_t *actionargs)
       return;
 
    P_SubtractAmmo(player, -1);
-   P_SpawnPlayerMissile(pmo, tnum2);
+   P_SpawnPlayerMissile(pmo, tnum2, playermissilemode_e::heretic);
    P_SpawnPlayerMissileAngleHeretic(pmo, tnum2, pmo->angle - (ANG45 / 10));
    P_SpawnPlayerMissileAngleHeretic(pmo, tnum2, pmo->angle + (ANG45 / 10));
    P_SpawnPlayerMissileAngleHeretic(pmo, tnum3, pmo->angle - (ANG45 / 5));
@@ -451,7 +453,7 @@ void A_FireSkullRodPL1(actionargs_t *actionargs)
 
    P_SubtractAmmo(player, -1);
    const int tnum = E_SafeThingType(MT_HORNRODFX1);
-   Mobj     *mo   = P_SpawnPlayerMissile(player->mo, tnum);
+   Mobj     *mo   = P_SpawnPlayerMissile(player->mo, tnum, playermissilemode_e::heretic);
    // Randomize the first frame
    if(mo && P_Random(pr_skullrod) > 128)
       P_SetMobjState(mo, mo->state->nextstate);
@@ -468,7 +470,7 @@ void A_FirePhoenixPL1(actionargs_t *actionargs)
       return;
 
    P_SubtractAmmo(player, -1);
-   P_SpawnPlayerMissile(mo, tnum);
+   P_SpawnPlayerMissile(mo, tnum, playermissilemode_e::heretic);
    // Commented out fire-trail functionality
    //P_SpawnPlayerMissile(player->mo, E_SafeThingType(MT_MNTRFX2));
    angle = mo->angle + ANG180;
