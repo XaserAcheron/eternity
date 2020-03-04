@@ -441,6 +441,8 @@ struct mobjinfo_t
    int trailzoffset;    // [XA] 02/22/2020: projectile trail z offset (fixed point)
    int trailchance;     // [XA] 02/22/2020: projectile trail spawn chance (out of 255)
    int trailsparsity;   // [XA] 02/22/2020: projectile trail sparsity
+   int missileheight;  // [XA] 03/03/2020: Z offset (from bottom) for missile attacks
+   int bulletzoffset;   // [XA] 03/03/2020: Z offset (from center) for bullet attacks
 
    e_pickupfx_t *pickupfx;
 
