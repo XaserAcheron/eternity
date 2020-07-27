@@ -428,6 +428,7 @@ void  P_MobjThinker(Mobj *mobj);
 Mobj *P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown,
                   bool ptcl, Mobj *shooter, const MetaTable *pufftype = nullptr,
                   const Mobj *hitmobj = nullptr);
+void  P_SpawnBeam(const MetaTable *trailtype, const v3fixed_t start, const v3fixed_t end);
 void  P_SpawnUnknownThings();
 Mobj *P_SpawnMapThing(mapthing_t *mt);
 bool  P_CheckMissileSpawn(Mobj *);  // killough 8/2/98

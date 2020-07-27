@@ -65,6 +65,61 @@ void M_NormalizeVec2(v2float_t &vec, float mag)
 }
 
 // 
+// M_MagnitudeVec3
+//
+// Get the magnitude of a three-dimensional vector
+//
+float M_MagnitudeVec3(const v3float_t &vec)
+{
+   return sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+}
+double M_MagnitudeVec3(const v3double_t &vec)
+{
+   return sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+}
+
+//
+// M_NormalizeVec3
+//
+// Normalize a three-dimensional vector in-place.
+//
+void M_NormalizeVec3(v3float_t &vec)
+{
+   float mag = M_MagnitudeVec3(vec);
+
+   vec.x /= mag;
+   vec.y /= mag;
+   vec.z /= mag;
+}
+void M_NormalizeVec3(v3double_t &vec)
+{
+   double mag = M_MagnitudeVec3(vec);
+
+   vec.x /= mag;
+   vec.y /= mag;
+   vec.z /= mag;
+}
+
+//
+// M_NormalizeVec3
+//
+// Normalize a three-dimensional vector in-place using
+// precomputed magnitude.
+//
+void M_NormalizeVec3(v3float_t &vec, float mag)
+{
+   vec.x /= mag;
+   vec.y /= mag;
+   vec.z /= mag;
+}
+void M_NormalizeVec3(v3double_t &vec, double mag)
+{
+   vec.x /= mag;
+   vec.y /= mag;
+   vec.z /= mag;
+}
+
+// 
 // M_TranslateVec3f
 //
 // Translates the given vector (in doom's coordinate system) to the camera

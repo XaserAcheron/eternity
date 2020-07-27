@@ -36,13 +36,16 @@
 #include "d_mod.h"
 #include "doomstat.h"
 #include "e_args.h"
+#include "e_beam.h"
 #include "e_mod.h"
+#include "e_puff.h"
 #include "e_sound.h"
 #include "e_states.h"
 #include "e_string.h"
 #include "e_things.h"
 #include "e_ttypes.h"
 #include "hu_stuff.h"
+#include "m_bbox.h"
 #include "p_enemy.h"
 #include "p_info.h"
 #include "p_inter.h"
@@ -1683,6 +1686,178 @@ void A_SelfDestruct(actionargs_t *actionargs)
       P_ExplodeMissile(actor, nullptr);
    else
       A_Die(actionargs);
+}
+
+enum shockattack_flags : unsigned int
+{
+   SHOCKATTACK_HURTSHOOTER = 0x00000001
+};
+
+static dehflags_t shockattack_flaglist[] =
+{
+   { "normal",      0x00000000              },
+   { "hurtshooter", SHOCKATTACK_HURTSHOOTER },
+   { NULL,        0 }
+};
+
+static dehflagset_t shockattack_flagset =
+{
+   shockattack_flaglist, // flaglist
+   0,                    // mode
+};
+
+struct shockvictim_t
+{
+   Mobj   *mo;
+   fixed_t distance;
+};
+
+struct shockdata_t
+{
+   Mobj *source;
+   uint32_t flags;
+   fixed_t radius;
+   size_t maxvictims;
+   PODCollection<shockvictim_t> victims;
+};
+
+//
+// PIT_ShockAttack
+//
+// [XA] TODO: document
+//
+static bool PIT_ShockAttack(Mobj *candidate, void *context)
+{
+   fixed_t dx, dy, dist;
+   shockdata_t * data = static_cast<shockdata_t *>(context);
+
+   // don't hurt the shooter unless we really gotta
+   if(!(data->flags & SHOCKATTACK_HURTSHOOTER) && data->source->target == candidate)
+      return true;
+
+   // not a valid candidate if it's not shootable
+   if(!(candidate->flags & MF_SHOOTABLE))
+      return true;
+
+   // check xy range, using the same formula as RadiusAttack
+   // TODO: maybe add a flag for accurate 3D distance later
+   dx = D_abs(getThingX(data->source, candidate) - data->source->x);
+   dy = D_abs(getThingY(data->source, candidate) - data->source->y);
+   dist = dx > dy ? dx : dy;
+   dist = (dist - candidate->radius) >> FRACBITS;
+
+   if(dist < 0)
+      dist = 0;
+
+   if(dist >= data->radius)
+      return true;  // out of range
+
+   //check z range
+   if ((D_abs(getThingZ(data->source, candidate) - data->source->z) / FRACUNIT) > 2 * data->radius)
+      return true;
+
+   // must be in direct path
+   if(!P_CheckSight(candidate, data->source))
+      return true;
+
+   // candidate is valid! if we haven't yet hit our max number
+   // of victims yet, just add it to the victims list.
+   size_t numVictims = data->victims.getLength();
+   if(numVictims < data->maxvictims)
+   {
+      data->victims.add({ candidate, dist });
+      return true;
+   }
+
+   // otherwise, replace the furthest-away victim with this one
+   // [presuming it's not already further away than the rest].
+   size_t farthestIndex = 0;
+   fixed_t farthestDist = 0;
+   for (size_t i = 0; i < numVictims; i++) {
+      if (data->victims[i].distance > farthestDist) {
+         farthestDist = data->victims[i].distance;
+         farthestIndex = i;
+      }
+   }
+   if (dist < farthestDist) {
+      data->victims[farthestIndex].mo = candidate;
+      data->victims[farthestIndex].distance = dist;
+   }
+
+   // we be done
+   return true;
+}
+
+//
+// A_ShockAttack
+//
+// [XA] TODO: document
+//
+// args[0] : damage
+// args[1] : damagemod
+// args[2] : radius
+// args[3] : flags
+// args[4] : maxvictims
+// args[5] : pufftype
+// args[6] : beamtype
+// args[7] : hitsound
+//
+void A_ShockAttack(actionargs_t *actionargs)
+{
+   shockdata_t   shockdata;
+   soundparams_t params;
+
+   Mobj      *source = actionargs->actor;
+   arglist_t *args   = actionargs->args;
+   shockdata.source  = source;
+
+   int       damage     = E_ArgAsInt   (args, 0, 5);
+   int       dmgmod     = E_ArgAsInt   (args, 1, 3);
+   shockdata.radius     = E_ArgAsFixed (args, 2, 128*FRACUNIT);
+   shockdata.flags      = E_ArgAsFlags (args, 3, &shockattack_flagset);
+   shockdata.maxvictims = E_ArgAsInt   (args, 4, 32);
+   const char *pufftype = E_ArgAsString(args, 5, nullptr);
+   const char *beamtype = E_ArgAsString(args, 6, nullptr);
+   params.sfx           = E_ArgAsSound (args, 7);
+
+   if (dmgmod < 1)
+      dmgmod = 1;
+   else if (dmgmod > 256)
+      dmgmod = 256;
+
+   // collect the nearest 'n' victims.
+   fixed_t bbox[4];
+   bbox[BOXLEFT] = source->x - shockdata.radius;
+   bbox[BOXTOP] = source->y + shockdata.radius;
+   bbox[BOXRIGHT] = source->x + shockdata.radius;
+   bbox[BOXBOTTOM] = source->y - shockdata.radius;
+
+   // ioanch 20160107: walk through all portals
+   P_TransPortalBlockWalker(bbox, source->groupid, false, &shockdata,
+      [](int x, int y, int groupid, void *data) -> bool
+   {
+      P_BlockThingsIterator(x, y, groupid, PIT_ShockAttack, data);
+      return true;
+   });
+
+   // damage the victims & spawn effects
+   size_t numVictims = shockdata.victims.getLength();
+   for (size_t i = 0; i < numVictims; i++)
+   {
+      Mobj *victim = shockdata.victims[i].mo;
+      v3fixed_t startPos = { source->x, source->y, source->z + (source->height / 2) + source->info->bulletzoffset };
+      v3fixed_t endPos = { victim->x, victim->y, victim->z + (victim->height / 2) };
+      angle_t puffangle = P_PointToAngle(endPos.x, endPos.y, startPos.x, startPos.y);
+      int dmg = damage * (P_Random(pr_shockattack) % dmgmod + 1);
+
+      P_DamageMobj(victim, source, source->target, dmg, source->info->mod);
+      P_SpawnPuff(endPos.x, endPos.y, endPos.z, puffangle, 2, true, source->target, E_PuffForName(pufftype), victim);
+      P_SpawnBeam(E_BeamForName(beamtype), startPos, endPos);
+   }
+
+   // play the hitsound if there's at least one victim
+   if(params.sfx && numVictims > 0)
+      S_StartSfxInfo(params.setNormalDefaults(shockdata.source));
 }
 
 // EOF

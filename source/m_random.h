@@ -241,7 +241,9 @@ typedef enum {
   pr_nailbombshoot,  // A_Nailbomb random damage
   pr_fasttrailchance,         // [XA] 02/22/2020: Fast projectile trail spawn-chance
 
+  pr_spawnbeam,               // [XA] 03/05/2020: beam spawning
   pr_spawnexchance,           // [XA] 02/28/2020: A_SpawnEx spawnchance
+  pr_shockattack,             // [XA] 03/05/2020: A_ShockAttack damage
 
   pr_aeon, // Aeon RNG
 

@@ -32,6 +32,7 @@
 #include "d_mod.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "e_beam.h"
 #include "e_exdata.h"
 #include "e_inventory.h"
 #include "e_player.h"
@@ -2768,6 +2769,66 @@ Mobj *P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z, angle_t dir,
    }
 
    return th;
+}
+
+//
+// P_SpawnBeam
+//
+// [XA] Generalized particle/actor beams. Woohoo!
+// TODO: particles. Eventually. :P
+//
+void P_SpawnBeam(const MetaTable *beamtype, const v3fixed_t start, const v3fixed_t end)
+{
+   if(!beamtype)
+      return;
+
+   int mobjtype = beamtype->getInt(keyBeamThingType, D_MININT);
+   if (mobjtype == D_MININT)
+      return;
+
+   double  density   =                 beamtype->getDouble(keyBeamDensity  , beamDensityDefault);
+   fixed_t taper     = M_DoubleToFixed(beamtype->getDouble(keyBeamTaperDist, 0.0               ));
+   fixed_t driftX    = M_DoubleToFixed(beamtype->getDouble(keyBeamXDrift   , 0.0               ));
+   fixed_t driftY    = M_DoubleToFixed(beamtype->getDouble(keyBeamYDrift   , 0.0               ));
+   fixed_t driftZ    = M_DoubleToFixed(beamtype->getDouble(keyBeamZDrift   , 0.0               ));
+   fixed_t maxDriftX = M_DoubleToFixed(beamtype->getDouble(keyBeamXDriftMax, 0.0               ));
+   fixed_t maxDriftY = M_DoubleToFixed(beamtype->getDouble(keyBeamYDriftMax, 0.0               ));
+   fixed_t maxDriftZ = M_DoubleToFixed(beamtype->getDouble(keyBeamZDriftMax, 0.0               ));
+
+   // [XA] TODO: portal-awareness.
+   // [XA] TODO: taper distance
+   // [XA] TODO: brainstorm a way to make this more flexible (e.g. sin/cos params). Drift may not make sense in such a context.
+
+   v3double_t dir{
+      M_FixedToDouble(end.x - start.x),
+      M_FixedToDouble(end.y - start.y),
+      M_FixedToDouble(end.z - start.z)
+   };
+   double distance = M_MagnitudeVec3(dir);
+   M_NormalizeVec3(dir, distance);
+
+   v3fixed_t step{
+      M_DoubleToFixed(dir.x * density),
+      M_DoubleToFixed(dir.y * density),
+      M_DoubleToFixed(dir.z * density)
+   };
+   angle_t ang = P_PointToAngle(end.x, end.y, start.x, start.y);
+   v3fixed_t curr { start.x, start.y, start.z };
+   v3fixed_t drift { 0, 0, 0 };
+   v3fixed_t ofs;
+
+   size_t numSteps = static_cast<size_t>(floor(distance / density));
+   for(size_t i = 0; i < numSteps; i++) {
+      ofs.x = drift.x = FixedClamp(-maxDriftX, drift.x + (P_RangeRandomEx(pr_spawnbeam, 0, driftX * 2) - driftX), maxDriftX);
+      ofs.y = drift.y = FixedClamp(-maxDriftY, drift.y + (P_RangeRandomEx(pr_spawnbeam, 0, driftY * 2) - driftY), maxDriftY);
+      ofs.z = drift.z = FixedClamp(-maxDriftZ, drift.z + (P_RangeRandomEx(pr_spawnbeam, 0, driftZ * 2) - driftZ), maxDriftZ);
+      P_RotatePoint(ofs.x, ofs.y, ang);
+      P_SpawnMobj(curr.x + ofs.x, curr.y + ofs.y, curr.z + ofs.z, mobjtype);
+      curr.x += step.x;
+      curr.y += step.y;
+      curr.z += step.z;
+      // v2fixed_t pos = P_LinePortalCrossing(th->x, th->y, th->momx >> 1, th->momy >> 1, &newgroupid);
+   }
 }
 
 //

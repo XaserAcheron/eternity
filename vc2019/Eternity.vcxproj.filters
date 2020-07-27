@@ -1020,6 +1020,9 @@
     <ClCompile Include="..\source\m_debug.cpp">
       <Filter>Source Files\M_\M_ Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\e_beam.cpp">
+      <Filter>Source Files\E_\E_ Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\source\hu_inventory.cpp">
       <Filter>Source Files\HU_\HU_ Source</Filter>
     </ClCompile>
@@ -1837,6 +1840,9 @@
     </ClInclude>
     <ClInclude Include="..\source\m_debug.h">
       <Filter>Source Files\M_\M_ Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\e_beam.h">
+      <Filter>Source Files\E_\E_ Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\source\hu_inventory.h">
       <Filter>Source Files\HU_\HU_ Headers</Filter>

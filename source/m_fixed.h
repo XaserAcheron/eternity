@@ -76,6 +76,21 @@ inline static fixed_t FixedDiv(fixed_t a, fixed_t b)
     (fixed_t)(((int64_t) a << FRACBITS) / b);
 }
 
+//
+// Fixed Point Clamp
+//
+// [XA] holy convenience function, batman!
+//
+inline static fixed_t FixedClamp(fixed_t min, fixed_t val, fixed_t max)
+{
+   if(val < min)
+      return min;
+   else if(val > max)
+      return max;
+   else
+      return val;
+}
+
 // SoM: this is only the case for 16.16 bit fixed point. If a different 
 // precision is desired, this must be changed accordingly
 #define FPFRACUNIT 65536.0
